@@ -13,102 +13,21 @@ function lerp(p1, p2, t) {
   return p1 + (p2 - p1) * t;
 }
 
-function getFontSize(font) {
-  const match = font.match(/(\d+)px/);
-  return match ? parseInt(match[1], 10) : 30;
-}
-
-function createTextTexture(gl, text, font = 'bold 30px monospace', color = 'black') {
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  context.font = font;
-  const metrics = context.measureText(text);
-  const textWidth = Math.ceil(metrics.width);
-  const textHeight = Math.ceil(getFontSize(font) * 1.2);
-  canvas.width = textWidth + 20;
-  canvas.height = textHeight + 20;
-  context.font = font;
-  context.fillStyle = color;
-  context.textBaseline = 'middle';
-  context.textAlign = 'center';
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillText(text, canvas.width / 2, canvas.height / 2);
-  const texture = new Texture(gl, { generateMipmaps: false });
-  texture.image = canvas;
-  return { texture, width: canvas.width, height: canvas.height };
-}
-
-class Title {
-  constructor({ gl, plane, renderer, text, textColor = '#545050', font = '30px sans-serif' }) {
-    this.gl = gl;
-    this.plane = plane;
-    this.renderer = renderer;
-    this.text = text;
-    this.textColor = textColor;
-    this.font = font;
-    this.createMesh();
-  }
-  createMesh() {
-    const { texture, width, height } = createTextTexture(this.gl, this.text, this.font, this.textColor);
-    const geometry = new Plane(this.gl);
-    const program = new Program(this.gl, {
-      vertex: `
-        attribute vec3 position;
-        attribute vec2 uv;
-        uniform mat4 modelViewMatrix;
-        uniform mat4 projectionMatrix;
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragment: `
-        precision highp float;
-        uniform sampler2D tMap;
-        varying vec2 vUv;
-        void main() {
-          vec4 color = texture2D(tMap, vUv);
-          if (color.a < 0.1) discard;
-          gl_FragColor = color;
-        }
-      `,
-      uniforms: { tMap: { value: texture } },
-      transparent: true
-    });
-    this.mesh = new Mesh(this.gl, { geometry, program });
-    this.aspect = width / height;
-    this.mesh.setParent(this.plane);
-    this.resize();
-  }
-  resize() {
-    const textHeight = this.plane.scale.y * 0.15;
-    const textWidth = textHeight * this.aspect;
-    this.mesh.scale.set(textWidth / this.plane.scale.x, textHeight / this.plane.scale.y, 1);
-    this.mesh.position.y = -0.5 - (textHeight * 0.5 + 0.05 * this.plane.scale.y * 0.15) / this.plane.scale.y;
-  }
-}
-
 class Media {
-  constructor({ geometry, gl, image, index, length, renderer, scene, screen, text, viewport, bend, textColor, borderRadius = 0, font }) {
+  constructor({ geometry, gl, image, index, length, scene, screen, viewport, bend, borderRadius = 0 }) {
     this.extra = 0;
     this.geometry = geometry;
     this.gl = gl;
     this.image = image;
     this.index = index;
     this.length = length;
-    this.renderer = renderer;
     this.scene = scene;
     this.screen = screen;
-    this.text = text;
     this.viewport = viewport;
     this.bend = bend;
-    this.textColor = textColor;
     this.borderRadius = borderRadius;
-    this.font = font;
     this.createShader();
     this.createMesh();
-    this.createTitle();
     this.onResize();
   }
   createShader() {
@@ -181,16 +100,6 @@ class Media {
     this.plane = new Mesh(this.gl, { geometry: this.geometry, program: this.program });
     this.plane.setParent(this.scene);
   }
-  createTitle() {
-    this.title = new Title({
-      gl: this.gl,
-      plane: this.plane,
-      renderer: this.renderer,
-      text: this.text,
-      textColor: this.textColor,
-      font: this.font
-    });
-  }
   update(scroll, direction) {
     this.plane.position.x = this.x - scroll.current - this.extra;
 
@@ -246,7 +155,6 @@ class Media {
     this.plane.scale.x = this.viewport.width * 0.165;
     this.plane.scale.y = this.plane.scale.x * 1.29;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
-    if (this.title) this.title.resize();
     this.padding = this.viewport.width * 0.045;
     this.width = this.plane.scale.x + this.padding;
     this.widthTotal = this.width * this.length;
@@ -257,7 +165,7 @@ class Media {
 }
 
 class App {
-  constructor(container, { items, bend, textColor = '#ffffff', borderRadius = 0, font = 'bold 30px sans-serif', scrollSpeed = 2, scrollEase = 0.05, autoScroll = 0 } = {}) {
+  constructor(container, { items, bend, borderRadius = 0, scrollSpeed = 2, scrollEase = 0.05, autoScroll = 0 } = {}) {
     this.container = container;
     this.scrollSpeed = scrollSpeed;
     this.autoScroll = autoScroll;
@@ -268,7 +176,7 @@ class App {
     this.createScene();
     this.onResize();
     this.createGeometry();
-    this.createMedias(items, bend, textColor, borderRadius, font);
+    this.createMedias(items, bend, borderRadius);
     this.update = this.update.bind(this);
     this.update();
     this.addEventListeners();
@@ -297,7 +205,7 @@ class App {
       widthSegments: 100
     });
   }
-  createMedias(items, bend = 1, textColor, borderRadius, font) {
+  createMedias(items, bend = 1, borderRadius) {
     const galleryItems = items && items.length ? items : [];
     this.mediasImages = galleryItems.concat(galleryItems);
     this.medias = this.mediasImages.map((data, index) => {
@@ -307,15 +215,11 @@ class App {
         image: data.image,
         index,
         length: this.mediasImages.length,
-        renderer: this.renderer,
         scene: this.scene,
         screen: this.screen,
-        text: data.text,
         viewport: this.viewport,
         bend,
-        textColor,
-        borderRadius,
-        font
+        borderRadius
       });
     });
   }
@@ -427,35 +331,23 @@ class App {
 const container = document.getElementById('circular-gallery');
 
 if (container) {
-  // Placeholder images - replace with your own work later.
   const items = [
-    { image: 'https://picsum.photos/seed/cg1/800/600', text: 'Weddings' },
-    { image: 'https://picsum.photos/seed/cg2/800/600', text: 'Portraits' },
-    { image: 'https://picsum.photos/seed/cg3/800/600', text: 'Travel Films' },
-    { image: 'https://picsum.photos/seed/cg4/800/600', text: 'Commercials' },
-    { image: 'https://picsum.photos/seed/cg5/800/600', text: 'Events' },
-    { image: 'https://picsum.photos/seed/cg6/800/600', text: 'Street' },
-    { image: 'https://picsum.photos/seed/cg7/800/600', text: 'Landscapes' },
-    { image: 'https://picsum.photos/seed/cg8/800/600', text: 'Music Videos' }
+    { image: 'https://picsum.photos/seed/cg1/800/600' },
+    { image: 'https://picsum.photos/seed/cg2/800/600' },
+    { image: 'https://picsum.photos/seed/cg3/800/600' },
+    { image: 'https://picsum.photos/seed/cg4/800/600' },
+    { image: 'https://picsum.photos/seed/cg5/800/600' },
+    { image: 'https://picsum.photos/seed/cg6/800/600' },
+    { image: 'https://picsum.photos/seed/cg7/800/600' },
+    { image: 'https://picsum.photos/seed/cg8/800/600' }
   ];
 
-  const init = () => {
-    new App(container, {
-      items,
-      bend: 2,
-      textColor: '#ecebe8',
-      borderRadius: 0.05,
-      font: 'bold 28px "Playfair Display"',
-      scrollSpeed: 2,
-      scrollEase: 0.05,
-      autoScroll: 0.0004
-    });
-  };
-
-  // Ensure the display font is ready before labels are drawn to canvas.
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.load('bold 28px "Playfair Display"').then(() => document.fonts.ready).then(init).catch(init);
-  } else {
-    init();
-  }
+  new App(container, {
+    items,
+    bend: 2,
+    borderRadius: 0.05,
+    scrollSpeed: 2,
+    scrollEase: 0.05,
+    autoScroll: 0.0004
+  });
 }
