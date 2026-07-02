@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Portfolio of Bibek - photography and videography work." />
+  <title>Portfolio | Bibek</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav container">
+      <a href="index.html" class="logo" data-magnetic>BIBEK<span>.</span></a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link"><span>Home</span></a></li>
+        <li><a href="portfolio.html" class="nav-link active"><span>Portfolio</span></a></li>
+        <li><a href="contact.html" class="nav-link"><span>Contact</span></a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero container">
+      <p class="kicker" data-reveal>Selected Work &middot; 2020&ndash;2026</p>
+      <h1 class="hero-title">
+        <span class="line"><span data-line>Port<em>folio</em></span></span>
+      </h1>
+      <p class="page-sub" data-reveal style="--d:.2s">A curated selection of photography and film. Click any piece to view it larger.</p>
+    </section>
+
+    <section class="section container">
+      <div class="filters" role="tablist" aria-label="Portfolio filters" data-reveal>
+        <button class="filter-btn active" data-filter="all"><span>All</span></button>
+        <button class="filter-btn" data-filter="photo"><span>Photography</span></button>
+        <button class="filter-btn" data-filter="video"><span>Videography</span></button>
+      </div>
+
+      <div class="gallery">
+        <figure class="g-item tall" data-category="photo" data-reveal>
+          <div class="g-media"><img src="https://picsum.photos/seed/p1/800/1100" alt="Wedding ceremony photo" loading="lazy" /></div>
+          <figcaption><h3>Golden Hour Vows</h3><p>Wedding &middot; Photo</p></figcaption>
+        </figure>
+        <figure class="g-item" data-category="video" data-reveal style="--d:.05s">
+          <div class="g-media"><img src="https://picsum.photos/seed/v1/800/700" alt="Travel film still" loading="lazy" /><span class="play-badge" aria-hidden="true"><i>&#9654;</i></span></div>
+          <figcaption><h3>Himalayan Roads</h3><p>Travel &middot; Film</p></figcaption>
+        </figure>
+        <figure class="g-item" data-category="photo" data-reveal style="--d:.1s">
+          <div class="g-media"><img src="https://picsum.photos/seed/p2/800/700" alt="Studio portrait" loading="lazy" /></div>
+          <figcaption><h3>Studio Sessions</h3><p>Portrait &middot; Photo</p></figcaption>
+        </figure>
+        <figure class="g-item tall" data-category="video" data-reveal style="--d:.05s">
+          <div class="g-media"><img src="https://picsum.photos/seed/v2/800/1100" alt="Commercial shoot still" loading="lazy" /><span class="play-badge" aria-hidden="true"><i>&#9654;</i></span></div>
+          <figcaption><h3>Brand Story: Aura Café</h3><p>Commercial &middot; Film</p></figcaption>
+        </figure>
+        <figure class="g-item" data-category="photo" data-reveal style="--d:.1s">
+          <div class="g-media"><img src="https://picsum.photos/seed/p3/800/700" alt="Street photography" loading="lazy" /></div>
+          <figcaption><h3>City Fragments</h3><p>Street &middot; Photo</p></figcaption>
+        </figure>
+        <figure class="g-item" data-category="video" data-reveal style="--d:.15s">
+          <div class="g-media"><img src="https://picsum.photos/seed/v3/800/700" alt="Music video still" loading="lazy" /><span class="play-badge" aria-hidden="true"><i>&#9654;</i></span></div>
+          <figcaption><h3>Echoes (Music Video)</h3><p>Music &middot; Film</p></figcaption>
+        </figure>
+        <figure class="g-item" data-category="photo" data-reveal>
+          <div class="g-media"><img src="https://picsum.photos/seed/p4/800/700" alt="Landscape photo" loading="lazy" /></div>
+          <figcaption><h3>Silent Peaks</h3><p>Landscape &middot; Photo</p></figcaption>
+        </figure>
+        <figure class="g-item tall" data-category="video" data-reveal style="--d:.05s">
+          <div class="g-media"><img src="https://picsum.photos/seed/v4/800/1100" alt="Wedding film still" loading="lazy" /><span class="play-badge" aria-hidden="true"><i>&#9654;</i></span></div>
+          <figcaption><h3>A &amp; S Wedding Film</h3><p>Wedding &middot; Film</p></figcaption>
+        </figure>
+        <figure class="g-item" data-category="photo" data-reveal style="--d:.1s">
+          <div class="g-media"><img src="https://picsum.photos/seed/p5/800/700" alt="Event photo" loading="lazy" /></div>
+          <figcaption><h3>Festival Nights</h3><p>Event &middot; Photo</p></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section cta container" data-reveal>
+      <p class="kicker">Like what you see?</p>
+      <h2 class="cta-title">Your story could be <em>next.</em></h2>
+      <a href="contact.html" class="btn btn-primary btn-lg" data-magnetic><span>Book a Session</span></a>
+    </section>
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <figure>
+      <img src="" alt="" id="lightbox-img" />
+      <figcaption id="lightbox-caption"></figcaption>
+    </figure>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>&copy; 2026 Bibek. All rights reserved.</p>
+      <ul class="socials">
+        <li><a href="#" class="social-link" data-magnetic>Instagram</a></li>
+        <li><a href="#" class="social-link" data-magnetic>YouTube</a></li>
+        <li><a href="#" class="social-link" data-magnetic>Vimeo</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
