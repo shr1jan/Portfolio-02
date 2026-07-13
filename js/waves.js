@@ -69,7 +69,7 @@
     backgroundColor: 'transparent',
     waveSpeedX: 0.02,
     waveSpeedY: 0.01,
-    waveAmpX: 40,
+    waveAmpX: 0,
     waveAmpY: 20,
     xGap: 4,
     yGap: 10,
@@ -143,7 +143,6 @@
         if (dist < l) {
           const s = 1 - dist / l;
           const f = Math.cos(dist * 0.001) * s;
-          p.cursor.vx += Math.cos(mouse.a) * f * l * mouse.vs * 0.00065;
           p.cursor.vy += Math.sin(mouse.a) * f * l * mouse.vs * 0.00065;
         }
 
