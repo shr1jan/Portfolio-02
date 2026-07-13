@@ -65,13 +65,13 @@
 
   /* ---------- Config ---------- */
   const config = {
-    lineColor: '#525059',
+    lineColor: '#454445',
     backgroundColor: 'transparent',
-    waveSpeedX: 0.02,
-    waveSpeedY: 0.01,
-    waveAmpX: 40,
-    waveAmpY: 20,
-    xGap: 4,
+    waveSpeedX: 0.005,
+    waveSpeedY: 0.005,
+    waveAmpX: 30,
+    waveAmpY: 10,
+    xGap: 10,
     yGap: 10
   };
 
@@ -90,9 +90,9 @@
 
   /* ---------- Helpers ---------- */
   function setSize() {
-    bounding = container.getBoundingClientRect();
-    canvas.width = bounding.width;
-    canvas.height = bounding.height;
+    canvas.width = 1080;
+    canvas.height = 1080;
+    bounding = { width: 1080, height: 1080 };
   }
 
   function setLines() {
