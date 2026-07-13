@@ -460,7 +460,7 @@ em { font-style: italic; color: var(--accent); }
   opacity: 0; transform: translateY(28px);
   animation: reveal linear both;
   animation-timeline: view();
-  animation-range: entry 0% entry 40%;
+  animation-range: entry 5% entry 25%;
   transition: none;
 }
 @keyframes reveal {
