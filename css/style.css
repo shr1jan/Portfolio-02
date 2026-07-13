@@ -29,10 +29,9 @@ body {
   pointer-events: none;
   opacity: 0.35;
   filter: blur(0.75px);
-  display: flex; align-items: center; justify-content: center;
 }
 .waves-bg canvas {
-  display: block; width: 1080px; height: 1080px;
+  display: block; width: 100%; height: 100%;
 }
 
 /* Film-grain texture overlay */

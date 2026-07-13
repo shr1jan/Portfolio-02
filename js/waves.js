@@ -90,9 +90,9 @@
 
   /* ---------- Helpers ---------- */
   function setSize() {
-    canvas.width = 1080;
-    canvas.height = 1080;
-    bounding = { width: 1080, height: 1080 };
+    bounding = container.getBoundingClientRect();
+    canvas.width = bounding.width;
+    canvas.height = bounding.height;
   }
 
   function setLines() {
