@@ -5,6 +5,39 @@
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+/* ---------- Cross-page transition ---------- */
+if (!prefersReducedMotion) {
+  const root = document.documentElement;
+  root.classList.add('page-transition');
+  requestAnimationFrame(() => root.classList.add('page-entered'));
+
+  window.addEventListener('pageshow', () => {
+    root.classList.remove('page-exiting');
+    requestAnimationFrame(() => root.classList.add('page-entered'));
+  });
+
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href]');
+    if (!link) return;
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (link.target && link.target !== '_self') return;
+    if (link.hasAttribute('download')) return;
+
+    const url = new URL(link.href, window.location.href);
+    const samePageHash = url.pathname === window.location.pathname && url.hash;
+    const isSameOrigin = url.origin === window.location.origin;
+    const isFilePage = /\.(html?)$/i.test(url.pathname) || url.pathname.endsWith('/');
+
+    if (!isSameOrigin || samePageHash || !isFilePage || link.getAttribute('href') === '#') return;
+
+    event.preventDefault();
+    root.classList.add('page-exiting');
+    setTimeout(() => {
+      window.location.href = url.href;
+    }, 210);
+  });
+}
+
 /* ---------- Click spark (vanilla adaptation of react-bits ClickSpark) ---------- */
 if (!prefersReducedMotion) {
   const sparkColor = '#d4a24e';
@@ -226,24 +259,234 @@ if (lightbox) {
   });
 }
 
-/* ---------- Contact form ---------- */
+/* ---------- Contact planner ---------- */
 const contactForm = document.getElementById('contact-form');
 const formStatus = document.getElementById('form-status');
 
 if (contactForm && formStatus) {
-  contactForm.addEventListener('submit', (event) => {
-    event.preventDefault();
+  const steps = [...contactForm.querySelectorAll('.planner-step')];
+  const progressCount = document.getElementById('planner-count');
+  const progressFill = document.getElementById('planner-fill');
+  const budgetInput = document.getElementById('budget');
+  const budgetLabel = document.getElementById('budget-label');
+  const projectOtherWrap = document.getElementById('project-other-wrap');
+  const contactMethodFields = [...contactForm.querySelectorAll('.contact-method-field')];
+  const successName = document.getElementById('success-name');
+  const totalSteps = 9;
+  const storageKey = 'bibek-shoot-planner';
+  let currentStep = 0;
+  let plannerData = {
+    name: '',
+    projectType: '',
+    projectOther: '',
+    shootDate: '',
+    dateUndecided: false,
+    location: '',
+    budget: '180000',
+    priorities: [],
+    notes: '',
+    contactMethod: '',
+    whatsapp: '',
+    email: '',
+    instagram: ''
+  };
 
-    const name = contactForm.name.value.trim();
-    const email = contactForm.email.value.trim();
-    const message = contactForm.message.value.trim();
+  const money = new Intl.NumberFormat('en-IN');
+  const savePlanner = () => localStorage.setItem(storageKey, JSON.stringify({ currentStep, plannerData }));
+  const setStatus = (message) => {
+    formStatus.textContent = message;
+    if (message) setTimeout(() => (formStatus.textContent = ''), 3200);
+  };
 
-    if (!name || !email || !message) {
-      formStatus.textContent = 'Please fill in your name, email, and message.';
+  const syncBudget = () => {
+    plannerData.budget = budgetInput.value;
+    budgetLabel.textContent = `Around Rs. ${money.format(Number(budgetInput.value))}`;
+  };
+
+  const syncDateState = () => {
+    const dateField = contactForm.elements.shootDate;
+    const undecidedField = contactForm.elements.dateUndecided;
+    dateField.disabled = Boolean(plannerData.dateUndecided);
+    undecidedField.checked = Boolean(plannerData.dateUndecided);
+  };
+
+  const syncInputs = () => {
+    Object.keys(plannerData).forEach((key) => {
+      const field = contactForm.elements[key];
+      if (!field || Array.isArray(plannerData[key])) return;
+      if (field.type === 'checkbox') field.checked = Boolean(plannerData[key]);
+      else field.value = plannerData[key];
+    });
+    syncBudget();
+    syncDateState();
+  };
+
+  const collectInputs = () => {
+    Object.keys(plannerData).forEach((key) => {
+      const field = contactForm.elements[key];
+      if (!field || Array.isArray(plannerData[key])) return;
+      plannerData[key] = field.type === 'checkbox' ? field.checked : field.value;
+    });
+    syncBudget();
+  };
+
+  const updateSelections = () => {
+    contactForm.querySelectorAll('.choice-card').forEach((button) => {
+      const group = button.closest('[data-field]');
+      if (!group) return;
+      const field = group.dataset.field;
+      const value = button.dataset.value;
+      const selected = Array.isArray(plannerData[field])
+        ? plannerData[field].includes(value)
+        : plannerData[field] === value;
+      button.classList.toggle('selected', selected);
+    });
+
+    projectOtherWrap.classList.toggle('show', plannerData.projectType === 'Something else');
+    contactMethodFields.forEach((field) => {
+      field.classList.toggle('show', field.dataset.method === plannerData.contactMethod);
+    });
+  };
+
+  const showStep = (nextStep) => {
+    currentStep = Math.max(0, Math.min(nextStep, totalSteps - 1));
+    steps.forEach((step) => step.classList.toggle('active', Number(step.dataset.step) === currentStep));
+    progressCount.textContent = `${currentStep + 1} of ${totalSteps}`;
+    progressFill.style.width = `${((currentStep + 1) / totalSteps) * 100}%`;
+    formStatus.textContent = '';
+    updateSelections();
+    savePlanner();
+
+    const focusable = steps[currentStep].querySelector('input:not([type="hidden"]), textarea, .choice-card, .planner-next, button[type="submit"]');
+    if (focusable && currentStep > 0) setTimeout(() => focusable.focus({ preventScroll: true }), 80);
+  };
+
+  const showSuccess = () => {
+    steps.forEach((step) => step.classList.toggle('active', step.dataset.step === 'success'));
+    progressCount.textContent = 'Complete';
+    progressFill.style.width = '100%';
+    successName.textContent = plannerData.name || 'there';
+    localStorage.removeItem(storageKey);
+  };
+
+  const validateStep = () => {
+    collectInputs();
+    if (currentStep === 1 && !plannerData.name.trim()) return 'Please add your name.';
+    if (currentStep === 2 && !plannerData.projectType) return 'Please choose what we are capturing.';
+    if (currentStep === 2 && plannerData.projectType === 'Something else' && !plannerData.projectOther.trim()) {
+      return 'Please tell us a little about your project.';
+    }
+    if (currentStep === 3 && !plannerData.shootDate && !plannerData.dateUndecided) {
+      return 'Please choose a date or mark it as undecided.';
+    }
+    if (currentStep === 4 && !plannerData.location.trim()) return 'Please add the shoot location.';
+    if (currentStep === 6 && plannerData.priorities.length === 0) return 'Please choose at least one priority.';
+    if (currentStep === 8 && !plannerData.contactMethod) return 'Please choose how we should reach you.';
+    if (currentStep === 8) {
+      const fieldName = plannerData.contactMethod.toLowerCase();
+      if (!plannerData[fieldName].trim()) return `Please add your ${plannerData.contactMethod} details.`;
+      if (fieldName === 'email' && !/^\S+@\S+\.\S+$/.test(plannerData.email)) return 'Please add a valid email address.';
+    }
+    return '';
+  };
+
+  const nextStep = () => {
+    const issue = validateStep();
+    if (issue) {
+      setStatus(issue);
+      return;
+    }
+    showStep(currentStep + 1);
+  };
+
+  const hydratePlanner = () => {
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      plannerData = { ...plannerData, ...(parsed.plannerData || {}) };
+      currentStep = Math.min(Number(parsed.currentStep) || 0, totalSteps - 1);
+    } catch {
+      localStorage.removeItem(storageKey);
+    }
+  };
+
+  contactForm.addEventListener('input', (event) => {
+    const target = event.target;
+    if (!target.name) return;
+    plannerData[target.name] = target.type === 'checkbox' ? target.checked : target.value;
+    if (target === budgetInput) syncBudget();
+    if (target.id === 'date-undecided' && target.checked) {
+      plannerData.shootDate = '';
+      contactForm.elements.shootDate.value = '';
+    }
+    if (target.name === 'shootDate' && target.value) plannerData.dateUndecided = false;
+    syncDateState();
+    savePlanner();
+  });
+
+  contactForm.addEventListener('click', (event) => {
+    const choice = event.target.closest('.choice-card');
+    const nextButton = event.target.closest('.planner-next');
+    const backButton = event.target.closest('.planner-back');
+
+    if (choice) {
+      const group = choice.closest('[data-field]');
+      const field = group.dataset.field;
+      const value = choice.dataset.value;
+
+      if (field === 'priorities') {
+        if (plannerData.priorities.includes(value)) {
+          plannerData.priorities = plannerData.priorities.filter((item) => item !== value);
+        } else if (plannerData.priorities.length < 3 || value === "I'm not sure yet") {
+          plannerData.priorities = value === "I'm not sure yet" ? [value] : [...plannerData.priorities.filter((item) => item !== "I'm not sure yet"), value];
+        } else {
+          setStatus('Choose up to 3 priorities.');
+        }
+      } else {
+        plannerData[field] = value;
+        if (field === 'projectType' && value !== 'Something else') plannerData.projectOther = '';
+        if (field === 'contactMethod') contactMethodFields.forEach((fieldEl) => {
+          const input = fieldEl.querySelector('input');
+          if (fieldEl.dataset.method !== value && input) {
+            plannerData[input.name] = '';
+            input.value = '';
+          }
+        });
+      }
+
+      updateSelections();
+      savePlanner();
+      if (group.classList.contains('single-choice') && value !== 'Something else') setTimeout(nextStep, 220);
       return;
     }
 
-    formStatus.textContent = `Thanks, ${name}! Your message has been noted. I'll get back to you soon.`;
+    if (nextButton) nextStep();
+    if (backButton) showStep(currentStep - 1);
+  });
+
+  contactForm.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.target.tagName === 'TEXTAREA') return;
+    event.preventDefault();
+    if (currentStep < totalSteps - 1) nextStep();
+    else contactForm.requestSubmit();
+  });
+
+  contactForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    collectInputs();
+    const issue = validateStep();
+    if (issue) {
+      setStatus(issue);
+      return;
+    }
+    savePlanner();
+    showSuccess();
     contactForm.reset();
   });
+
+  hydratePlanner();
+  syncInputs();
+  updateSelections();
+  showStep(currentStep);
 }
