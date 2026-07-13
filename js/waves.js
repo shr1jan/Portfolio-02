@@ -90,9 +90,11 @@
 
   /* ---------- Helpers ---------- */
   function setSize() {
-    bounding = container.getBoundingClientRect();
+    const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    bounding = { width: window.innerWidth, height: docHeight };
     canvas.width = bounding.width;
     canvas.height = bounding.height;
+    container.style.height = docHeight + 'px';
   }
 
   function setLines() {
