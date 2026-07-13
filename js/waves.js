@@ -87,7 +87,6 @@
   const noise = new Noise(Math.random());
   let bounding = { width: 0, height: 0 };
   let lines = [];
-  let frameId = null;
 
   /* ---------- Helpers ---------- */
   function setSize() {
@@ -157,17 +156,10 @@
     ctx.stroke();
   }
 
-  function tick(t) {
-    movePoints(t);
-    drawLines();
-    frameId = requestAnimationFrame(tick);
-  }
-
-  function onResize() { setSize(); setLines(); }
-
   /* ---------- Init ---------- */
   setSize();
   setLines();
-  frameId = requestAnimationFrame(tick);
-  window.addEventListener('resize', onResize);
+  movePoints(0);
+  drawLines();
+  window.addEventListener('resize', () => { setSize(); setLines(); movePoints(0); drawLines(); });
 })();
