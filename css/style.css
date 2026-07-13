@@ -23,6 +23,17 @@ body {
   overflow-x: hidden;
 }
 
+/* ============ Waves background ============ */
+.waves-bg {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  filter: blur(1.5px);
+}
+.waves-bg canvas {
+  display: block; width: 100%; height: 100%;
+}
+
 /* Film-grain texture overlay */
 body::after {
   content: '';
@@ -575,5 +586,6 @@ em { font-style: italic; color: var(--accent); }
   }
   [data-line] { transform: none; }
   [data-reveal] { opacity: 1; transform: none; }
+  .waves-bg { display: none; }
   .cursor, .cursor-dot { display: none; }
 }
