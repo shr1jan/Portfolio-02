@@ -69,13 +69,10 @@
     backgroundColor: 'transparent',
     waveSpeedX: 0.02,
     waveSpeedY: 0.01,
-    waveAmpX: 0,
+    waveAmpX: 40,
     waveAmpY: 20,
     xGap: 4,
-    yGap: 10,
-    friction: 0.5,
-    tension: 0.1,
-    maxCursorMove: 10
+    yGap: 10
   };
 
   /* ---------- Create DOM ---------- */
@@ -91,11 +88,6 @@
   let bounding = { width: 0, height: 0 };
   let lines = [];
   let frameId = null;
-
-  const mouse = {
-    x: -10, y: 0, lx: 0, ly: 0,
-    sx: 0, sy: 0, v: 0, vs: 0, a: 0, set: false
-  };
 
   /* ---------- Helpers ---------- */
   function setSize() {
@@ -120,8 +112,7 @@
         pts.push({
           x: xStart + xGap * i,
           y: yStart + yGap * j,
-          wave: { x: 0, y: 0 },
-          cursor: { x: 0, y: 0, vx: 0, vy: 0 }
+          wave: { x: 0, y: 0 }
         });
       }
       lines.push(pts);
@@ -129,38 +120,19 @@
   }
 
   function movePoints(time) {
-    const { waveSpeedX, waveSpeedY, waveAmpX, waveAmpY, friction, tension, maxCursorMove } = config;
+    const { waveSpeedX, waveSpeedY, waveAmpX, waveAmpY } = config;
     lines.forEach(pts => {
       pts.forEach(p => {
         const move = noise.perlin2((p.x + time * waveSpeedX) * 0.002, (p.y + time * waveSpeedY) * 0.0015) * 12;
         p.wave.x = Math.cos(move) * waveAmpX;
         p.wave.y = Math.sin(move) * waveAmpY;
-
-        const dx = p.x - mouse.sx;
-        const dy = p.y - mouse.sy;
-        const dist = Math.hypot(dx, dy);
-        const l = Math.max(175, mouse.vs);
-        if (dist < l) {
-          const s = 1 - dist / l;
-          const f = Math.cos(dist * 0.001) * s;
-          p.cursor.vy += Math.sin(mouse.a) * f * l * mouse.vs * 0.00065;
-        }
-
-        p.cursor.vx += (0 - p.cursor.x) * tension;
-        p.cursor.vy += (0 - p.cursor.y) * tension;
-        p.cursor.vx *= friction;
-        p.cursor.vy *= friction;
-        p.cursor.x += p.cursor.vx * 2;
-        p.cursor.y += p.cursor.vy * 2;
-        p.cursor.x = Math.min(maxCursorMove, Math.max(-maxCursorMove, p.cursor.x));
-        p.cursor.y = Math.min(maxCursorMove, Math.max(-maxCursorMove, p.cursor.y));
       });
     });
   }
 
-  function moved(point, withCursor) {
-    const x = point.x + point.wave.x + (withCursor ? point.cursor.x : 0);
-    const y = point.y + point.wave.y + (withCursor ? point.cursor.y : 0);
+  function moved(point) {
+    const x = point.x + point.wave.x;
+    const y = point.y + point.wave.y;
     return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
   }
 
@@ -170,14 +142,14 @@
     ctx.beginPath();
     ctx.strokeStyle = config.lineColor;
     lines.forEach(points => {
-      let p1 = moved(points[0], false);
+      let p1 = moved(points[0]);
       ctx.moveTo(p1.x, p1.y);
       points.forEach((p, idx) => {
         const isLast = idx === points.length - 1;
-        p1 = moved(p, !isLast);
+        p1 = moved(p);
         ctx.lineTo(p1.x, p1.y);
         if (isLast) {
-          const p2 = moved(points[idx + 1] || points[points.length - 1], !isLast);
+          const p2 = moved(points[idx + 1] || points[points.length - 1]);
           ctx.moveTo(p2.x, p2.y);
         }
       });
@@ -186,17 +158,6 @@
   }
 
   function tick(t) {
-    mouse.sx += (mouse.x - mouse.sx) * 0.1;
-    mouse.sy += (mouse.y - mouse.sy) * 0.1;
-    const dx = mouse.x - mouse.lx;
-    const dy = mouse.y - mouse.ly;
-    mouse.v = Math.hypot(dx, dy);
-    mouse.vs += (mouse.v - mouse.vs) * 0.1;
-    mouse.vs = Math.min(100, mouse.vs);
-    mouse.lx = mouse.x;
-    mouse.ly = mouse.y;
-    mouse.a = Math.atan2(dy, dx);
-
     movePoints(t);
     drawLines();
     frameId = requestAnimationFrame(tick);
@@ -204,32 +165,9 @@
 
   function onResize() { setSize(); setLines(); }
 
-  function onMouseMove(e) {
-    mouse.x = e.clientX - bounding.left;
-    mouse.y = e.clientY - bounding.top;
-    if (!mouse.set) {
-      mouse.sx = mouse.x; mouse.sy = mouse.y;
-      mouse.lx = mouse.x; mouse.ly = mouse.y;
-      mouse.set = true;
-    }
-  }
-
-  function onTouchMove(e) {
-    const touch = e.touches[0];
-    mouse.x = touch.clientX - bounding.left;
-    mouse.y = touch.clientY - bounding.top;
-    if (!mouse.set) {
-      mouse.sx = mouse.x; mouse.sy = mouse.y;
-      mouse.lx = mouse.x; mouse.ly = mouse.y;
-      mouse.set = true;
-    }
-  }
-
   /* ---------- Init ---------- */
   setSize();
   setLines();
   frameId = requestAnimationFrame(tick);
   window.addEventListener('resize', onResize);
-  window.addEventListener('mousemove', onMouseMove);
-  window.addEventListener('touchmove', onTouchMove, { passive: true });
 })();
